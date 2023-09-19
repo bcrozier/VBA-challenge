@@ -1,0 +1,206 @@
+Sub Ohio()
+'sheet set up
+
+    Dim ws As Worksheet
+    Dim sheetNames As Variant
+    Dim cellAddresses As Variant
+    Dim words As Variant
+    Dim i As Integer
+    Dim j As Integer
+    
+    sheetNames = Array("2018", "2019", "2020")
+    
+    cellAddresses = Array("I1", "J1", "K1", "L1", "M2", "M3", "M4", "N1", "O1")
+    
+    words = Array("Ticker", "Total Volume", "Yearly Change", "Percent Change", "Greatest % Change", "Greatest % Decrease", "Greatest Total Volume", "Ticker", "Value")
+    
+    If UBound(words) <> UBound(cellAddresses) Then
+    MsgBox "Number of words and cell addresses do not match!"
+    Exit Sub
+    End If
+    
+    For j = LBound(sheetNames) To UBound(sheetNames)
+        
+        Set ws = ThisWorkbook.Sheets(sheetNames(j))
+        For i = LBound(cellAddresses) To UBound(cellAddresses)
+        ws.Range(cellAddresses(i)).Value = words(i)
+        Next i
+    Next j
+End Sub
+
+Sub RunBothMacros()
+
+    Ohio
+    
+    Alabama
+    
+    Texas
+    
+    Arizona
+    
+    Louisiana
+    
+    Montana
+End Sub
+
+Sub Montana()
+    ' Min and Max percent change across multiple sheets
+    
+    Dim ws As Worksheet
+    Dim rng As Range
+    Dim cell As Range
+    Dim minValue As Double
+    Dim maxValue As Double
+    
+    
+    For Each ws In ThisWorkbook.Sheets(Array("2018", "2019", "2020"))
+        Set rng = ws.Range("L2:L759001")
+        
+        minValue = rng.Cells(1).Value
+        maxValue = rng.Cells(1).Value
+        
+        For Each cell In rng
+            If cell.Value < minValue Then
+                minValue = cell.Value
+            ElseIf cell.Value > maxValue Then
+                maxValue = cell.Value
+            End If
+        Next cell
+        
+        ws.Range("O2").Value = Format(minValue, "0.00%")
+        ws.Range("O3").Value = Format(maxValue, "0.00%")
+    Next ws
+End Sub
+
+
+Sub Louisiana()
+    ' Max volume across multiple sheets
+    
+    Dim ws As Worksheet
+    Dim rng As Range
+    Dim maxNumber As Double
+    
+    
+    For Each ws In ThisWorkbook.Sheets(Array("2018", "2019", "2020"))
+        Set rng = ws.Range("J2:J759001")
+        
+        maxNumber = rng.Cells(1).Value
+        
+        For Each cell In rng
+            If cell.Value > maxNumber Then
+                maxNumber = cell.Value
+            End If
+        Next cell
+        
+        ws.Range("O4").Value = maxNumber
+    Next ws
+End Sub
+ 
+
+Sub Arizona()
+    ' Percent change across multiple sheets
+    
+    Dim ws As Worksheet
+    Dim oldValue As Double
+    Dim newValue As Double
+    Dim percentChange As Double
+    Dim rowNum As Long
+    Dim columnL As Long
+    Dim maxRows As Long
+    Dim chunkSize As Long
+    
+    columnL = 12
+    maxRows = 759001
+    chunkSize = 253
+    
+    
+    For Each ws In ThisWorkbook.Sheets(Array("2018", "2019", "2020"))
+        For rowNum = 2 To maxRows Step chunkSize
+            oldValue = ws.Cells(rowNum, 3).Value
+            newValue = ws.Cells(rowNum + chunkSize - 1, 6).Value
+            
+            If oldValue = 0 Then
+                percentChange = 0
+            Else
+                percentChange = ((newValue - oldValue) / oldValue) * 100
+            End If
+            
+            ws.Cells(rowNum \ chunkSize + 2, columnL).Value = percentChange & "%"
+        Next rowNum
+    Next ws
+End Sub
+
+
+
+Sub Alabama()
+    ' Adds ticker symbol for multiple sheets
+    
+    Dim ws As Worksheet
+    Dim tickerSymbolsRange As Range
+    Dim i As Long, rowNum As Long
+    
+    
+    For Each ws In ThisWorkbook.Sheets(Array("2018", "2019", "2020"))
+        Set tickerSymbolsRange = ws.Range("A2:A759001")
+        
+        For i = 2 To 759001
+            rowNum = (i - 2) * 253 + 1
+            If rowNum <= tickerSymbolsRange.Rows.Count Then
+                ws.Cells(i, "I").Value = tickerSymbolsRange.Cells(rowNum, 1).Value
+            End If
+        Next i
+    Next ws
+End Sub
+
+
+Sub Texas()
+    ' Adds TV and YC for multiple sheets
+    
+    Dim ws As Worksheet
+    Dim sumResult As Double
+    Dim startRow As Long
+    Dim endRow As Long
+    Dim targetCell As Range
+    Dim maxRow As Long
+    Dim repetitionCount As Long
+    
+
+    For Each ws In ThisWorkbook.Sheets(Array("2018", "2019", "2020"))
+        maxRow = 759001
+        repetitionCount = 3000
+        startRow = 2
+        endRow = 254
+        
+        For i = 0 To repetitionCount
+            sumResult = 0
+            
+            For Each cell In ws.Range("G" & startRow & ":G" & endRow)
+                sumResult = sumResult + cell.Value
+            Next cell
+            
+            Set targetCell = ws.Cells(i + 1, "J")
+            targetCell.Value = sumResult
+            
+            startRow = startRow + 253
+            endRow = endRow + 253
+            
+            Dim rowC As Long
+            Dim rowF As Long
+            rowC = 2 + (i - 1) * 253
+            rowF = 254 + (i - 1) * 253
+            
+            If IsNumeric(ws.Range("C" & rowC).Value) And IsNumeric(ws.Range("F" & rowF).Value) Then
+                ws.Range("K" & (i + 1)).Value = -1 * (ws.Range("C" & rowC).Value - ws.Range("F" & rowF).Value)
+            End If
+            
+            ws.Range("K" & (i + 1)).NumberFormat = "General"
+        Next i
+    Next ws
+End Sub
+
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+
+End Sub
+
+
